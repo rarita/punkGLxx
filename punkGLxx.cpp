@@ -1,6 +1,9 @@
 ﻿#include "pch.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <limits>
+#include <iomanip>
 #include <vector>
 #include <string>
 
@@ -11,7 +14,11 @@ using namespace std;
 class RGB {
 public:
 	RGB(uint r, uint g, uint b);
+	uint const getR();
+	uint const getG();
+	uint const getB();
 	string const toString();
+	string const toHEX();
 private:
 	uint R;
 	uint G;
@@ -20,9 +27,28 @@ private:
 
 RGB::RGB(uint r, uint g, uint b) : R(r), G(g), B(b) {}
 
-const string RGB::toString()
-{
+uint const RGB::getR() {
+	return R;
+}
+
+uint const RGB::getG() {
+	return G;
+}
+
+uint const RGB::getB() {
+	return B;
+}
+
+const string RGB::toString() {
 	return "(R = " + to_string(R) + ";G = " + to_string(G) + ";B = " + to_string(B) + ")";
+}
+
+const string RGB::toHEX() {
+	stringstream stream;
+	stream << setfill('0') << setw(2) << std::hex << R; // lil bydlo
+	stream << setfill('0') << setw(2) << std::hex << G;
+	stream << setfill('0') << setw(2) << std::hex << B;
+	return stream.str();
 }
 
 class Vector2D {
@@ -149,6 +175,7 @@ public:
 	Canvas(uint x, uint y, RGB &bg_color); // Конструктор
 	void put_point(uint x, uint y, RGB &color); // Красим точку
 	void dump(); // Сливаем весь холст в нужный поток
+	void dumpHEX(string filename); // То же самое но в HEX для экономии места
 	uint const getWidth();
 	uint const getHeight();
 private:
@@ -185,6 +212,18 @@ void Canvas::dump() {
 		}
 		cout << endl;
 	}
+}
+
+void Canvas::dumpHEX(string filename) {
+	ofstream outfile;
+	outfile.open(filename);
+	// Пишем ширь и высь в первой строке
+	outfile << this->getWidth() << ";" << this->getHeight() << endl;
+	// Пишем все пикселы в след строке, не разделяем ибо все по 6 знаков
+	for (uint x = 0; x < this->getWidth(); x++)
+		for (uint y = 0; y < this->getHeight(); y++)
+			outfile << holder[x][y].toHEX();
+	outfile.close();
 }
 
 // Renderer
@@ -232,8 +271,8 @@ RGB traceRay(Vector3D &origin, Vector3D &direction, double min_t, double max_t) 
 }
 
 Canvas render() {
-	RGB cl_white = RGB(255, 255, 255);
-	Canvas canvas(IMAGE_WIDTH, IMAGE_HEIGHT, cl_white);
+	RGB bgc = backgroundColor;
+	Canvas canvas(IMAGE_WIDTH, IMAGE_HEIGHT, bgc);
 	for (uint x = 0; x < IMAGE_WIDTH; x++) {
 		for (uint y = 0; y < IMAGE_WIDTH; y++) {
 			Vector3D direction = canvasToViewport(x, y, canvas);
@@ -247,7 +286,6 @@ Canvas render() {
 
 int main()
 {
-	Canvas c = render();
-	c.dump();
-	cout << "That's all, folks!" << endl;
+	Canvas test = render();
+	test.dumpHEX("image.rcf");
 }
