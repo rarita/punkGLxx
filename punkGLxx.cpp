@@ -50,7 +50,7 @@ RGB RGB::operator*(double multiplier) {
 		this->getR() * multiplier,
 		this->getG() * multiplier,
 		this->getB() * multiplier
-		);
+	);
 }
 
 const string RGB::toString() {
@@ -59,9 +59,9 @@ const string RGB::toString() {
 
 const string RGB::toHEX() {
 	stringstream stream;
-	stream << setfill('0') << setw(2) << std::hex << R; // lil bydlo
-	stream << setfill('0') << setw(2) << std::hex << G;
-	stream << setfill('0') << setw(2) << std::hex << B;
+	stream << static_cast<unsigned char>(this->getR());
+	stream << static_cast<unsigned char>(this->getG());
+	stream << static_cast<unsigned char>(this->getB());
 	return stream.str();
 }
 
@@ -114,7 +114,7 @@ double const Vector3D::getZ() {
 }
 
 double const Vector3D::dotProduct(Vector3D other) {
-	return 
+	return
 		this->getX() * other.getX() +
 		this->getY() * other.getY() +
 		this->getZ() * other.getZ();
@@ -220,7 +220,7 @@ private:
 	const double m_specular;
 };
 
-Sphere::Sphere(const Vector3D center, double radius, RGB color, double specular) 
+Sphere::Sphere(const Vector3D center, double radius, RGB color, double specular)
 	: m_center(center), m_radius(radius), m_color(color), m_specular(specular) {}
 
 Vector3D const Sphere::getCenter() {
@@ -378,7 +378,7 @@ void Canvas::dumpBMP(string filename) {
 	x.important = 0;
 
 	//открываем файл на добавление
-	ofstream output_file(filename);
+	ofstream output_file(filename, ofstream::binary);
 	output_file.write("BM", 2); // а вот и прикручивание 2 буквы хэдэра
 	output_file.write((char*)&x, sizeof(x)); // прописываем структуру в бинарном формате
 
@@ -414,23 +414,23 @@ void Canvas::dumpBMP(string filename) {
 // Renderer
 // TODO поместить это зло в нужное место.
 // Настройки теперь тут, чтобы писать в хэдэр
-const uint IMAGE_WIDTH = 16;
-const uint IMAGE_HEIGHT = 16;
+const uint IMAGE_WIDTH = 2048;
+const uint IMAGE_HEIGHT = 2048;
 const uint viewport_size = 1;
 const uint projection_plane_z = 1;
 const Vector3D cameraPosition(0, 0, 0);
 const RGB backgroundColor(255, 255, 255);
-vector<Sphere> spheres {
+vector<Sphere> spheres{
 	Sphere(Vector3D(0, -1, 3), 1, RGB(255, 50, 100), 500),
-	//Sphere(Vector3D(2, 0, 4), 1, RGB(130, 250, 50), 500),
-	//Sphere(Vector3D(-2, 0, 4), 1, RGB(100, 200, 255), 10),
-	//Sphere(Vector3D(-2, 2, 4), 1.5, RGB(128, 128, 128), 1000) // Цвет Петербурга
+	Sphere(Vector3D(2, 0, 4), 1, RGB(130, 250, 50), 500),
+	Sphere(Vector3D(-2, 0, 4), 1, RGB(100, 200, 255), 10),
+	Sphere(Vector3D(-2, 2, 4), 1.5, RGB(128, 128, 128), 1000) // Цвет Петербурга
 };
 Light ambient_light(0.2, Vector3D(0.0, 0.0, 0.0)); // Эмбиент всегда один на сцене
-vector<Light> point_lights {
+vector<Light> point_lights{
 	Light(0.6, Vector3D(2.0, 1.0, 0.0))
 };
-vector<Light> directional_lights {
+vector<Light> directional_lights{
 	Light(0.2, Vector3D(1.0, 4.0, 4.0))
 };
 
@@ -451,7 +451,7 @@ double calculateLightning(Vector3D &point, Vector3D &normal, Vector3D &view, dou
 	for (auto &point_l : point_lights) {
 		Vector3D light_vector = (point_l.getPosition() - point);
 		intensity += point_l.calculateReflections(normal, view, light_vector, specular);
-	} 
+	}
 	for (auto &direct_l : directional_lights) {
 		Vector3D light_pos_pointer = (direct_l.getPosition()); // Сэйв памяти по максимуму. В функцию не пихается, т.к. замкнутый указатель.
 		intensity += direct_l.calculateReflections(normal, view, light_pos_pointer, specular);
@@ -511,5 +511,5 @@ Canvas render(bool withLight) {
 int main()
 {
 	Canvas light = render(true);
-	light.dumpHEX("dump.rcf");
+	light.dumpBMP("dump.bmp");
 }
